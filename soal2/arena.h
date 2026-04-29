@@ -17,17 +17,15 @@
 #define MSG_KEY 0x5678
 #define MAX_USERS 100
 
-// Struktur Pesan (Message Queue)
 typedef struct {
     long mtype;
     pid_t sender_pid;
     char command[50];
-    char data1[50]; // Username pengirim
-    char data2[50]; // Password atau Target
-    int value;      // Damage / Choice
+    char data1[50]; 
+    char data2[50]; 
+    int value;      
 } Message;
 
-// Struktur Profil Pemain
 typedef struct {
     char username[50];
     char password[50];
@@ -40,29 +38,27 @@ typedef struct {
     int is_online;
     int is_searching;
     int in_battle;
-    int battle_id;       // Sedang di arena nomor berapa
-    time_t search_start; // Waktu mulai mencari lawan
+    int battle_id;       
+    time_t search_start; 
 } User;
 
-// Struktur Arena Pertempuran
 typedef struct {
-    int active; // 0 = Kosong, 1 = Berjalan, 2 = Selesai
+    int active; 
     char p1[50];
     char p2[50];
     int hp1;
     int hp2;
     int max_hp1;
     int max_hp2;
-    char logs[5][100]; // 5 Log pertempuran
+    char logs[5][100];
     int is_bot_match;
-    int p1_won;        // 1 jika p1 menang, 0 jika p2 menang
+    int p1_won;       
 } BattleArena;
 
-// Memori Bersama (Shared Memory)
 typedef struct {
     User users[MAX_USERS];
     int user_count;
-    BattleArena arena[50]; // Maksimal 50 arena simultan
+    BattleArena arena[50]; ltan
 } SharedData;
 
 #endif
