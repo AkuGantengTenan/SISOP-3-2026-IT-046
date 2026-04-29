@@ -11,7 +11,7 @@ void save_data() {
 void load_data() {
     FILE *f = fopen("users.dat", "rb");
     if(f) { fread(shm, sizeof(SharedData), 1, f); fclose(f); }
-    // Reset status online & battle saat server nyala
+   
     for(int i=0; i<shm->user_count; i++) {
         shm->users[i].is_online = 0;
         shm->users[i].is_searching = 0;
@@ -19,13 +19,13 @@ void load_data() {
     }
 }
 
-// Menulis ke log arena
+
 void add_log(int arena_id, const char* new_log) {
     for(int i=0; i<4; i++) strcpy(shm->arena[arena_id].logs[i], shm->arena[arena_id].logs[i+1]);
     strcpy(shm->arena[arena_id].logs[4], new_log);
 }
 
-// Thread khusus untuk Matchmaking
+
 void *matchmaking_thread(void *arg) {
     while(1) {
         for(int i=0; i<shm->user_count; i++) {
@@ -33,14 +33,12 @@ void *matchmaking_thread(void *arg) {
                 time_t now = time(NULL);
                 int wait_time = difftime(now, shm->users[i].search_start);
 
-                // Cek musuh manusia
                 int found = -1;
                 for(int j=0; j<shm->user_count; j++) {
                     if(i != j && shm->users[j].is_searching) { found = j; break; }
                 }
 
                 if(found != -1) {
-                    // Buat arena untuk PvP
                     int a_id = -1;
                     for(int k=0; k<50; k++) { if(shm->arena[k].active == 0) { a_id = k; break; } }
                     
@@ -59,7 +57,7 @@ void *matchmaking_thread(void *arg) {
                     shm->users[found].is_searching = 0; shm->users[found].in_battle = 1; shm->users[found].battle_id = a_id;
                 } 
                 else if(wait_time >= 35) {
-                    // Buat arena Bot jika > 35 detik
+                 
                     int a_id = -1;
                     for(int k=0; k<50; k++) { if(shm->arena[k].active == 0) { a_id = k; break; } }
                     
@@ -69,7 +67,7 @@ void *matchmaking_thread(void *arg) {
                     strcpy(shm->arena[a_id].p2, "Monster (Bot)");
                     
                     shm->arena[a_id].max_hp1 = shm->users[i].base_health + (shm->users[i].xp / 10);
-                    shm->arena[a_id].max_hp2 = 100; // Stat Bot
+                    shm->arena[a_id].max_hp2 = 100;
                     shm->arena[a_id].hp1 = shm->arena[a_id].max_hp1;
                     shm->arena[a_id].hp2 = shm->arena[a_id].max_hp2;
                     add_log(a_id, "Melawan Monster Bot!");
@@ -145,7 +143,7 @@ int main() {
         else if(strcmp(req.command, "ATTACK") == 0) {
             char log_msg[100];
             int dmg = req.value;
-            // Cari arena user ini
+           
             for(int i=0; i<shm->user_count; i++) {
                 if(strcmp(shm->users[i].username, req.data1) == 0) {
                     int a_id = shm->users[i].battle_id;
@@ -158,15 +156,14 @@ int main() {
                     }
                     add_log(a_id, log_msg);
 
-                    // Cek jika ada yang mati
                     if(shm->arena[a_id].hp1 <= 0 || shm->arena[a_id].hp2 <= 0) {
-                        shm->arena[a_id].active = 2; // Selesai
+                        shm->arena[a_id].active = 2;
                         shm->arena[a_id].p1_won = (shm->arena[a_id].hp2 <= 0) ? 1 : 0;
                     }
                     break;
                 }
             }
-            // Fire and forget, no response needed for attack (handled by UI thread)
+           
         }
     }
     return 0;
