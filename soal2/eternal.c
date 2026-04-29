@@ -22,7 +22,6 @@ void send_request(Message *req, Message *res) {
     msgrcv(msgid, res, sizeof(Message) - sizeof(long), my_pid, 0);
 }
 
-// THREAD 1: Merender Layar Real-time
 void *ui_thread_func(void *arg) {
     int u_idx;
     while(in_battle_loop) {
@@ -40,10 +39,10 @@ void *ui_thread_func(void *arg) {
         printf("\n[Tekan 'a' Attack | 'u' Ultimate]\n");
         
         if(shm->arena[a_id].active == 2) {
-            in_battle_loop = 0; // Menghentikan input loop
+            in_battle_loop = 0; 
             break;
         }
-        usleep(100000); // Update 10x per detik
+        usleep(100000); 
     }
     return NULL;
 }
@@ -55,7 +54,7 @@ void battle_mode() {
     send_request(&req, &res);
 
     int u_idx;
-    // Menunggu Matchmaking (Loop UI Searching)
+    
     while(1) {
         for(int i=0; i<shm->user_count; i++) { if(strcmp(shm->users[i].username, my_user)==0) u_idx = i; }
         if(shm->users[u_idx].in_battle == 1) break;
@@ -67,21 +66,19 @@ void battle_mode() {
         sleep(1);
     }
 
-    // MEMASUKI ARENA (Mulai Multithreading)
     in_battle_loop = 1;
-    set_terminal_mode(1); // Mode Raw (tanpa enter)
+    set_terminal_mode(1); 
     
     pthread_t ui_thread;
     pthread_create(&ui_thread, NULL, ui_thread_func, NULL);
 
     time_t last_attack = 0;
 
-    // THREAD 2 (Main): Membaca Input Keyboard Non-Blocking
     while(in_battle_loop) {
         char c = getchar();
         if(c == 'a') {
             time_t now = time(NULL);
-            if(difftime(now, last_attack) >= 1) { // Cooldown 1 detik
+            if(difftime(now, last_attack) >= 1) { 
                 last_attack = now;
                 int dmg = shm->users[u_idx].base_damage + (shm->users[u_idx].xp / 50) + shm->users[u_idx].weapon_bonus;
                 
@@ -89,16 +86,15 @@ void battle_mode() {
                 atk_req.mtype = 1; atk_req.sender_pid = my_pid;
                 strcpy(atk_req.command, "ATTACK"); strcpy(atk_req.data1, my_user);
                 atk_req.value = dmg;
-                msgsnd(msgid, &atk_req, sizeof(Message) - sizeof(long), 0); // Fire & forget
+                msgsnd(msgid, &atk_req, sizeof(Message) - sizeof(long), 0); 
             }
         }
-        // Tambahkan logika 'u' Ultimate mirip dengan 'a' jika ada weapon
+        
     }
 
     pthread_join(ui_thread, NULL);
-    set_terminal_mode(0); // Kembalikan terminal ke normal
-    
-    // Kalkulasi Menang/Kalah
+    set_terminal_mode(0); 
+  
     system("clear");
     int a_id = shm->users[u_idx].battle_id;
     int is_p1 = (strcmp(shm->arena[a_id].p1, my_user) == 0);
@@ -106,18 +102,17 @@ void battle_mode() {
 
     if(i_won) {
         printf("== VICTORY ==\nBattle ended. Press [ENTER] to continue...\n");
-        // Logika update Gold & XP bisa dihandle client atau server (Idealnya server, tapi untuk simpel client-side update SHM)
+    
         shm->users[u_idx].xp += 50; shm->users[u_idx].gold += 120;
     } else {
         printf("== DEFEAT ==\nBattle ended. Press [ENTER] to continue...\n");
         shm->users[u_idx].xp += 15; shm->users[u_idx].gold += 30;
     }
     
-    // Level Up
     shm->users[u_idx].lvl = (shm->users[u_idx].xp / 100) + 1;
     shm->users[u_idx].in_battle = 0; shm->users[u_idx].battle_id = -1;
     
-    getchar(); // Menunggu Enter
+    getchar(); 
 }
 
 void lobby_menu() {
