@@ -332,7 +332,4 @@ Tidak ada kendala
 
 </details>
 
-   
 
-Tidak ada kendala
-</details>
